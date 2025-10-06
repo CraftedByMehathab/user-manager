@@ -28,8 +28,14 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: userWhereUniqueInput });
   }
 
-  update(id: number) {
-    return `This action updates a #${id} user`;
+  update(
+    userWhereUniqueInput: Prisma.UserWhereUniqueInput,
+    userUpdateInput: Prisma.UserUpdateInput,
+  ) {
+    return this.prisma.user.update({
+      where: userWhereUniqueInput,
+      data: userUpdateInput,
+    });
   }
 
   remove(id: number) {

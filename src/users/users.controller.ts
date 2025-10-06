@@ -44,7 +44,7 @@ export class UsersController {
 
   @Patch(':id')
   update(@Param('id') id: string) {
-    return this.usersService.update(+id);
+    return this.usersService.update({ id: +id }, {});
   }
 
   @Delete(':id')

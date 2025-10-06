@@ -68,4 +68,20 @@ export class AuthService {
     ]);
     return { accessToken, refreshToken };
   }
+
+  async logout(userId: number) {
+    return this.userService.update(
+      {
+        id: userId,
+        AND: {
+          hashedRt: {
+            not: null,
+          },
+        },
+      },
+      {
+        hashedRt: null,
+      },
+    );
+  }
 }

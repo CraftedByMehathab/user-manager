@@ -1,7 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
-import { setUpApp, signUpNewUser } from './helpers/app-setup';
+import {
+  setUpApp,
+  signUpAndLoginUser,
+  signUpNewUser,
+} from './helpers/app-setup';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { AuthTokensDto } from 'src/auth/dto/auth-user.dto';
 
@@ -71,6 +75,24 @@ describe('Auth Controller (e2e)', () => {
           password: 'incorrect',
         } as SignUpDto)
         .expect(403);
+    });
+  });
+  describe('/logout (PATCH)', () => {
+    it('should logout with right accessToken', async () => {
+      const testEmail = 'test1@test1.com';
+      const testPassword = 'testPassword';
+      const { accessToken } = await signUpAndLoginUser(
+        app,
+        testEmail,
+        testPassword,
+      );
+      return request(app.getHttpServer())
+        .patch('/auth/logout')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+    });
+    it('should fail with no access token', async () => {
+      return request(app.getHttpServer()).patch('/auth/logout').expect(401);
     });
   });
 });

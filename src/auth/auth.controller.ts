@@ -5,12 +5,19 @@ import {
   ForbiddenException,
   HttpCode,
   HttpStatus,
+  InternalServerErrorException,
+  Patch,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { SignUpDto } from './dto/signup.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
+import { JwtPayload } from './strategies/at.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -18,6 +25,7 @@ export class AuthController {
     private userService: UsersService,
     private authService: AuthService,
   ) {}
+  @HttpCode(HttpStatus.CREATED)
   @Post('signup')
   async signup(@Body() signInput: SignUpDto) {
     const uniqueUser = await this.userService.findOne({
@@ -42,6 +50,18 @@ export class AuthController {
           cause: error.cause,
         });
       else throw error;
+    }
+  }
+  @UseGuards(AuthGuard('jwt'))
+  @HttpCode(HttpStatus.OK)
+  @Patch('logout')
+  async logout(@Req() req: Request) {
+    try {
+      const user = req.user as JwtPayload;
+      await this.authService.logout(user?.['sub']);
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      throw new ForbiddenException();
     }
   }
 }

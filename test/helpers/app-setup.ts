@@ -7,6 +7,7 @@ import { AppModule } from 'src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SanatizeUserDto } from 'src/users/dto/sanatize-user.dto';
 import { AuthTokensDto } from 'src/auth/dto/auth-user.dto';
+import { LoginDto } from 'src/auth/dto/login.dto';
 
 export const setUpApp = async (): Promise<INestApplication<App>> => {
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -50,4 +51,28 @@ export const signUpNewUser = async (
 
   // const cookie = signupRes.get('Set-Cookie') || [];
   return authTokens;
+};
+
+export const signUpAndLoginUser = async (
+  app: INestApplication<App>,
+  email: string,
+  password: string,
+) => {
+  await request(app.getHttpServer())
+    .post('/auth/signup')
+    .send({
+      email,
+      password,
+    })
+    .expect(201);
+
+  const logingRes = await request(app.getHttpServer())
+    .post('/auth/login')
+    .send({
+      email,
+      password,
+    } as LoginDto)
+    .expect(200);
+
+  return logingRes.body as AuthTokensDto;
 };
