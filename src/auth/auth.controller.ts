@@ -19,6 +19,7 @@ import { JwtPayloadWithRt } from './strategies/rt.strategy';
 import { RtGuard } from './guards/rt.guard';
 import { GetCurrentUser } from 'src/commons/decorators/get-current-user.decorator';
 import { Public } from 'src/commons/decorators/public.decorator';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -56,6 +57,7 @@ export class AuthController {
       else throw error;
     }
   }
+  @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @Patch('logout')
   async logout(@GetCurrentUser('sub') userId: number) {
@@ -67,6 +69,7 @@ export class AuthController {
     }
   }
 
+  @ApiBearerAuth()
   @Public()
   @UseGuards(RtGuard)
   @HttpCode(HttpStatus.OK)

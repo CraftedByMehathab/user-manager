@@ -13,7 +13,9 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SanatizeUserDto } from './dto/sanatize-user.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('users')
 export class UsersController {

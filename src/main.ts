@@ -11,6 +11,7 @@ async function bootstrap() {
 
   // SWAGGER
   const config = new DocumentBuilder()
+    .addBearerAuth()
     .setTitle('User Management')
     .setDescription('Authentication and Authorization')
     .setVersion('1.0')
