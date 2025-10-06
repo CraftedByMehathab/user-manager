@@ -10,6 +10,7 @@ export const GetCurrentUser = createParamDecorator(
       .user;
 
     if (!data) return user;
-    return user?.[data];
+
+    return user?.[data] satisfies string | number;
   },
 );
