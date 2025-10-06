@@ -8,8 +8,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
   constructor(config: ConfigService) {
-    console.log(`url: ${config.get('DATABASE_URL')},`);
-
     super({
       datasources: {
         db: {

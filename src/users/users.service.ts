@@ -11,17 +11,11 @@ const scrypt = promisify(_scrypt);
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async hashPassword(password: string) {
-    const salt = randomBytes(8).toString('hex');
-    const hash = (await scrypt(password, salt, 32)) as Buffer;
-    return `${salt}.${hash.toString('hex')}`;
-  }
-
   async create(createUserDto: CreateUserDto) {
     return this.prisma.user.create({
       data: {
-        ...createUserDto,
-        password: await this.hashPassword(createUserDto.password),
+        email: createUserDto.email,
+        hash: await this.hashPassword(createUserDto.password),
       },
     });
   }
@@ -40,5 +34,23 @@ export class UsersService {
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  async hashPassword(password: string, saltStr?: string) {
+    const salt = saltStr || randomBytes(8).toString('hex');
+    const hash = (await scrypt(password, salt, 32)) as Buffer;
+    return `${salt}.${hash.toString('hex')}`;
+  }
+
+  async updateRtHash(userId: number, rt: string) {
+    const hashedRt = await this.hashPassword(rt);
+    await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        hashedRt,
+      },
+    });
   }
 }

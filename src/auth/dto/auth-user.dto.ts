@@ -10,6 +10,9 @@ export class AuthUserDto {
   @IsJWT()
   accessToken: string;
 
+  @IsJWT()
+  refreshToken: string;
+
   constructor(partial: Partial<AuthUserDto>) {
     Object.assign(this, partial);
   }

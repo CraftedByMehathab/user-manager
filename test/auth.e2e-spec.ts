@@ -44,4 +44,43 @@ describe('Auth Controller (e2e)', () => {
         .expect(400);
     });
   });
+  describe('/login (POST)', () => {
+    it('should login with right credentials', async () => {
+      const testEmail = 'test1@test1.com';
+      const testPassword = 'testPassword';
+
+      await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          email: testEmail,
+          password: testPassword,
+        } as SignUpDto)
+        .expect(201);
+      return request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: testEmail,
+          password: testPassword,
+        } as SignUpDto)
+        .expect(200);
+    });
+    it('should fail with incorrect credentials', async () => {
+      const testEmail = 'test1@test1.com';
+
+      await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          email: testEmail,
+          password: 'testPassword',
+        } as SignUpDto)
+        .expect(201);
+      return request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: testEmail,
+          password: 'incorrect',
+        } as SignUpDto)
+        .expect(403);
+    });
+  });
 });

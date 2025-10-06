@@ -27,10 +27,9 @@ describe('Users Controller (e2e)', () => {
         } as CreateUserDto)
         .expect(201)
         .then((res) => {
-          const { id, email, password } = res.body as SanatizeUserDto;
+          const { id, email } = res.body as SanatizeUserDto;
           expect(id).toBeDefined();
           expect(email).toEqual(testEmail);
-          expect(password).toBeUndefined();
         });
     });
     it('should throw exception on duplicate email entry', async () => {
