@@ -44,7 +44,7 @@ export class UsersService {
 
   async updateRtHash(userId: number, rt: string) {
     const hashedRt = await this.hashPassword(rt);
-    await this.prisma.user.update({
+    return this.prisma.user.update({
       where: {
         id: userId,
       },

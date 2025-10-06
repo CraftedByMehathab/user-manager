@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { SanatizeUserDto } from 'src/users/dto/sanatize-user.dto';
-import { AuthUserDto } from './dto/auth-user.dto';
+import { AuthTokensDto } from './dto/auth-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -16,7 +16,11 @@ export class AuthService {
   async authenticateUser(authInput: LoginDto) {
     try {
       const user = await this.validateUser(authInput);
-      if (user) return this.tokenSignIn(user);
+      if (user) {
+        const authTokens = await this.tokenSignIn(user);
+        await this.userService.updateRtHash(user.id, authTokens.refreshToken);
+        return authTokens;
+      }
     } catch (error) {
       if (error instanceof Error)
         throw new Error('Authentication failed', {
@@ -47,7 +51,7 @@ export class AuthService {
     }
   }
 
-  async tokenSignIn(user: SanatizeUserDto): Promise<AuthUserDto> {
+  async tokenSignIn(user: SanatizeUserDto): Promise<AuthTokensDto> {
     const tokenPayload = {
       sub: user.id,
       email: user.email,
@@ -62,6 +66,6 @@ export class AuthService {
         secret: this.configService.get('REFRESH_TOKEN_SECRET'),
       }),
     ]);
-    return { id: user.id, accessToken, email: user.email, refreshToken };
+    return { accessToken, refreshToken };
   }
 }

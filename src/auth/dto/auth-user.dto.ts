@@ -1,19 +1,13 @@
-import { IsEmail, IsJWT, IsPositive } from 'class-validator';
+import { IsJWT } from 'class-validator';
 
-export class AuthUserDto {
-  @IsPositive()
-  id: number;
-
-  @IsEmail()
-  email: string;
-
+export class AuthTokensDto {
   @IsJWT()
   accessToken: string;
 
   @IsJWT()
   refreshToken: string;
 
-  constructor(partial: Partial<AuthUserDto>) {
+  constructor(partial: Partial<AuthTokensDto>) {
     Object.assign(this, partial);
   }
 }

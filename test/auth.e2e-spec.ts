@@ -3,7 +3,7 @@ import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { setUpApp, signUpNewUser } from './helpers/app-setup';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
-import { AuthUserDto } from 'src/auth/dto/auth-user.dto';
+import { AuthTokensDto } from 'src/auth/dto/auth-user.dto';
 
 describe('Auth Controller (e2e)', () => {
   let app: INestApplication<App>;
@@ -27,19 +27,20 @@ describe('Auth Controller (e2e)', () => {
         } as SignUpDto)
         .expect(201)
         .then((res) => {
-          const { id, email, accessToken } = res.body as AuthUserDto;
-          expect(id).toBeDefined();
-          expect(email).toEqual(testEmail);
+          const { refreshToken, accessToken } = res.body as AuthTokensDto;
+          expect(refreshToken).toBeDefined();
           expect(accessToken).toBeDefined();
         });
     });
     it('should throw exception on duplicate signup', async () => {
-      const user = await signUpNewUser(app);
+      const testEmail = 'testEmail1@IsEmail.com';
+      const testPassword = 'testPassword';
+      await signUpNewUser(app, testEmail, testPassword);
       return request(app.getHttpServer())
         .post('/auth/signup')
         .send({
-          email: user.email,
-          password: 'testPassword',
+          email: testEmail,
+          password: testPassword,
         } as SignUpDto)
         .expect(400);
     });
@@ -48,14 +49,7 @@ describe('Auth Controller (e2e)', () => {
     it('should login with right credentials', async () => {
       const testEmail = 'test1@test1.com';
       const testPassword = 'testPassword';
-
-      await request(app.getHttpServer())
-        .post('/auth/signup')
-        .send({
-          email: testEmail,
-          password: testPassword,
-        } as SignUpDto)
-        .expect(201);
+      await signUpNewUser(app, testEmail, testPassword);
       return request(app.getHttpServer())
         .post('/auth/login')
         .send({
@@ -66,14 +60,10 @@ describe('Auth Controller (e2e)', () => {
     });
     it('should fail with incorrect credentials', async () => {
       const testEmail = 'test1@test1.com';
+      const testPassword = 'testPassword';
 
-      await request(app.getHttpServer())
-        .post('/auth/signup')
-        .send({
-          email: testEmail,
-          password: 'testPassword',
-        } as SignUpDto)
-        .expect(201);
+      await signUpNewUser(app, testEmail, testPassword);
+
       return request(app.getHttpServer())
         .post('/auth/login')
         .send({

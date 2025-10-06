@@ -1,20 +1,17 @@
 import {
   BadRequestException,
   Body,
-  ClassSerializerInterceptor,
   Controller,
   ForbiddenException,
   HttpCode,
   HttpStatus,
   Post,
-  UseInterceptors,
 } from '@nestjs/common';
 import { SignUpDto } from './dto/signup.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
-@UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -28,17 +25,17 @@ export class AuthController {
     });
     if (uniqueUser) throw new BadRequestException();
     const newUser = await this.userService.create(signInput);
-    const authUser = await this.authService.tokenSignIn(newUser);
-    await this.userService.updateRtHash(authUser.id, authUser.refreshToken);
-    return authUser;
+    const authTokens = await this.authService.tokenSignIn(newUser);
+    await this.userService.updateRtHash(newUser.id, authTokens.refreshToken);
+    return authTokens;
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Body() loginInput: LoginDto) {
     try {
-      const authUser = await this.authService.authenticateUser(loginInput);
-      return authUser;
+      const authTokens = await this.authService.authenticateUser(loginInput);
+      return authTokens;
     } catch (error) {
       if (error instanceof Error)
         throw new ForbiddenException(error.message, {

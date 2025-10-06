@@ -6,8 +6,11 @@ export class SanatizeUserDto implements User {
   email: string;
   @Exclude()
   hash: string;
+  @Exclude()
   hashedRt: string | null;
+  @Exclude()
   createdAt: Date;
+  @Exclude()
   updatedAt: Date;
 
   constructor(partial: Partial<SanatizeUserDto>) {
