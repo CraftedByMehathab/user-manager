@@ -23,8 +23,14 @@ export const setUpApp = async (): Promise<INestApplication<App>> => {
 
 export const createNewUser = async (app: INestApplication<App>) => {
   const testEmail = 'test@test.com';
+  const { accessToken } = await signUpNewUser(
+    app,
+    'admin@test.com',
+    'adminPassword',
+  );
   const signupRes = await request(app.getHttpServer())
     .post('/users')
+    .set('Authorization', `Bearer ${accessToken}`)
     .send({
       email: testEmail,
       password: 'testPassword',
@@ -53,19 +59,11 @@ export const signUpNewUser = async (
   return authTokens;
 };
 
-export const signUpAndLoginUser = async (
+export const loginUser = async (
   app: INestApplication<App>,
   email: string,
   password: string,
 ) => {
-  await request(app.getHttpServer())
-    .post('/auth/signup')
-    .send({
-      email,
-      password,
-    })
-    .expect(201);
-
   const logingRes = await request(app.getHttpServer())
     .post('/auth/login')
     .send({
@@ -75,4 +73,15 @@ export const signUpAndLoginUser = async (
     .expect(200);
 
   return logingRes.body as AuthTokensDto;
+};
+
+export const signUpAndLoginUser = async (
+  app: INestApplication<App>,
+  email: string,
+  password: string,
+) => {
+  await signUpNewUser(app, email, password);
+
+  const authTokens = await loginUser(app, email, password);
+  return authTokens;
 };

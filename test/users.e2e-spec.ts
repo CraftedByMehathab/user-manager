@@ -2,7 +2,12 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
-import { createNewUser, setUpApp } from './helpers/app-setup';
+import {
+  createNewUser,
+  loginUser,
+  setUpApp,
+  signUpNewUser,
+} from './helpers/app-setup';
 import { SanatizeUserDto } from 'src/users/dto/sanatize-user.dto';
 
 describe('Users Controller (e2e)', () => {
@@ -15,12 +20,19 @@ describe('Users Controller (e2e)', () => {
     await app?.close();
   });
   describe('/ (POST) ', () => {
-    it('Creates User', () => {
+    it('Creates User', async () => {
+      await signUpNewUser(app, 'admin@test.com', 'adminPassword');
+
       const testEmail = 'test@test.com';
       const testPassword = 'testPassword';
-
+      const { accessToken } = await loginUser(
+        app,
+        'admin@test.com',
+        'adminPassword',
+      );
       return request(app.getHttpServer())
         .post('/users')
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           email: testEmail,
           password: testPassword,
@@ -39,8 +51,14 @@ describe('Users Controller (e2e)', () => {
     });
     it('should throw exception on duplicate email entry', async () => {
       const user = await createNewUser(app);
+      const { accessToken } = await loginUser(
+        app,
+        'admin@test.com',
+        'adminPassword',
+      );
       return request(app.getHttpServer())
         .post('/users')
+        .set('Authorization', `Bearer ${accessToken}`)
         .send({
           email: user.email,
           password: 'testPassword',

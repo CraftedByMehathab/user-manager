@@ -8,17 +8,17 @@ import {
   InternalServerErrorException,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { SignUpDto } from './dto/signup.dto';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { JwtPayload } from './strategies/at.strategy';
 import { JwtPayloadWithRt } from './strategies/rt.strategy';
+import { RtGuard } from './guards/rt.guard';
+import { GetCurrentUser } from 'src/commons/decorators/get-current-user.decorator';
+import { Public } from 'src/commons/decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -26,6 +26,8 @@ export class AuthController {
     private userService: UsersService,
     private authService: AuthService,
   ) {}
+
+  @Public()
   @HttpCode(HttpStatus.CREATED)
   @Post('signup')
   async signup(@Body() signInput: SignUpDto) {
@@ -39,6 +41,7 @@ export class AuthController {
     return authTokens;
   }
 
+  @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Body() loginInput: LoginDto) {
@@ -53,25 +56,24 @@ export class AuthController {
       else throw error;
     }
   }
-  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @Patch('logout')
-  async logout(@Req() req: Request) {
+  async logout(@GetCurrentUser('sub') userId: number) {
     try {
-      const { sub: userId } = req.user as JwtPayload;
-
       await this.authService.logout(userId);
     } catch (error) {
       if (error instanceof InternalServerErrorException) throw error;
       throw new ForbiddenException();
     }
   }
-  @UseGuards(AuthGuard('jwt-refresh'))
+
+  @Public()
+  @UseGuards(RtGuard)
   @HttpCode(HttpStatus.OK)
   @Patch('refresh')
-  async refreshTokens(@Req() req: Request) {
+  async refreshTokens(@GetCurrentUser() user: JwtPayloadWithRt) {
     try {
-      const { sub: userId, refreshToken } = req.user as JwtPayloadWithRt;
+      const { sub: userId, refreshToken } = user ?? {};
       const tokens = await this.authService.refreshTokens(userId, refreshToken);
       return tokens;
     } catch (error) {
