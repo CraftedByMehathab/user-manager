@@ -33,14 +33,12 @@ export class AuthService {
     try {
       const user = await this.userService.findOne({ email: authInput.email });
       if (!user) throw new Error('Invalid user');
-      const [salt, storedHash] = user.hash.split('.');
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [_, currentHash] = (
-        await this.userService.hashPassword(authInput.password, salt)
-      ).split('.');
+      const isPasswordMatch = await this.compareHash(
+        authInput.password,
+        user.hash,
+      );
 
-      if (storedHash !== currentHash)
-        throw new Error('Email or Password is incorrect');
+      if (!isPasswordMatch) throw new Error('Email or Password is incorrect');
       return new SanatizeUserDto(user);
     } catch (error) {
       if (error instanceof Error)
@@ -83,5 +81,36 @@ export class AuthService {
         hashedRt: null,
       },
     );
+  }
+
+  async refreshTokens(userId: number, refreshToken: string) {
+    try {
+      const user = await this.userService.findOne({ id: userId });
+
+      if (!user) throw new Error('Access denied');
+
+      if (user.hashedRt) {
+        const rtMatches = await this.compareHash(refreshToken, user.hashedRt);
+        if (!rtMatches) throw new Error('Access denied');
+      }
+      const authTokens = await this.tokenSignIn(user);
+      await this.userService.updateRtHash(user.id, authTokens.refreshToken);
+      return authTokens;
+    } catch (error) {
+      if (error instanceof Error)
+        throw new Error('Access denied', {
+          cause: error.message,
+        });
+      else throw error;
+    }
+  }
+
+  async compareHash(stringToHash: string, hashToCompare: string) {
+    const [salt, storedHash] = hashToCompare.split('.');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_, currentHash] = (
+      await this.userService.hashAString(stringToHash, salt)
+    ).split('.');
+    return storedHash === currentHash;
   }
 }

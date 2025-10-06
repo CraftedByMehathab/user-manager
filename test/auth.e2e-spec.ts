@@ -95,4 +95,27 @@ describe('Auth Controller (e2e)', () => {
       return request(app.getHttpServer()).patch('/auth/logout').expect(401);
     });
   });
+  describe('/refresh (PATCH)', () => {
+    it('should refresh tokens with right refreshToken', async () => {
+      const testEmail = 'test1@test1.com';
+      const testPassword = 'testPassword';
+      const { refreshToken } = await signUpAndLoginUser(
+        app,
+        testEmail,
+        testPassword,
+      );
+      return request(app.getHttpServer())
+        .patch('/auth/refresh')
+        .set('Authorization', `Bearer ${refreshToken}`)
+        .expect(200)
+        .then((res) => {
+          const { accessToken, refreshToken } = res.body as AuthTokensDto;
+          expect(accessToken).toBeDefined();
+          expect(refreshToken).toBeDefined();
+        });
+    });
+    it('should fail with no access token', async () => {
+      return request(app.getHttpServer()).patch('/auth/refresh').expect(401);
+    });
+  });
 });

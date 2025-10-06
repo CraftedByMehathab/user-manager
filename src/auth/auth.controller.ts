@@ -18,6 +18,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { JwtPayload } from './strategies/at.strategy';
+import { JwtPayloadWithRt } from './strategies/rt.strategy';
 
 @Controller('auth')
 export class AuthController {
@@ -57,8 +58,22 @@ export class AuthController {
   @Patch('logout')
   async logout(@Req() req: Request) {
     try {
-      const user = req.user as JwtPayload;
-      await this.authService.logout(user?.['sub']);
+      const { sub: userId } = req.user as JwtPayload;
+
+      await this.authService.logout(userId);
+    } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
+      throw new ForbiddenException();
+    }
+  }
+  @UseGuards(AuthGuard('jwt-refresh'))
+  @HttpCode(HttpStatus.OK)
+  @Patch('refresh')
+  async refreshTokens(@Req() req: Request) {
+    try {
+      const { sub: userId, refreshToken } = req.user as JwtPayloadWithRt;
+      const tokens = await this.authService.refreshTokens(userId, refreshToken);
+      return tokens;
     } catch (error) {
       if (error instanceof InternalServerErrorException) throw error;
       throw new ForbiddenException();
